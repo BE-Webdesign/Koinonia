@@ -39,4 +39,32 @@ function log () {
 	};
 }
 
-log()( values( [ 1, 2, 3, 4, 5 ] ) );
+function map ( $fn ) {
+	return function ( $read ) use ( $fn ) {
+		return function ( $abort, $cb ) use ( $read, $fn ) {
+			$read( $abort, function ( $end, $data ) use ( $fn, $cb ) {
+				if ( $end ) {
+					$cb( $end, null );
+				} else {
+					$cb( null, $fn( $data ) );
+				}
+			});
+		};
+	};
+}
+
+function pull( ...$args ) {
+	$stream = \array_shift( $args );
+  	while ( count( $args ) ){
+    	$stream = \array_shift( $args )( $stream );
+	}
+
+	return $stream;
+}
+
+log()( map( function ( $num ) { return $num * 2; } )( values( [ 1, 2, 3, 4, 5 ] ) ) );
+pull(
+	values( [ 1, 2, 3, 4, 5 ] ),
+	map( function ( $num ) { return $num * 10; } ),
+	log()
+);
